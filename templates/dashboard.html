@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kpi_grid, chart, empty_state, no_data_cta, demo_banner, posts_table, chart_scripts %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+{{ demo_banner(has_demo) }}
+{% if not has_data %}
+  {% call empty_state('bi-cloud-arrow-up', 'No Instagram data yet', 'Upload your Instagram export to see your KPIs and charts. Not sure what to expect? Load clearly labelled demo data first.') %}
+    <div class="d-flex gap-2 justify-content-center flex-wrap">{{ no_data_cta() }}</div>
+  {% endcall %}
+{% else %}
+  {{ kpi_grid(ctx.kpis) }}
+  <div class="grid-2 mt-4">
+    {{ chart('followers_vs_following', 'Followers vs following', 'bar', 280, 'Accounts') }}
+    {{ chart('content_performance', 'Content performance', 'pie', 280) }}
+  </div>
+  <div class="mt-4">{{ chart('posting_frequency', 'Monthly activity', 'line', 260, 'Posts', '', True) }}</div>
+
+  <div class="grid-2 mt-4">
+    <div class="sp-card">
+      <h3 class="card-title">Key insights</h3>
+      {% for i in ctx.insights[:4] %}
+        <div class="insight insight-{{ i.tone }}"><strong>{{ i.title }}</strong><div class="muted">{{ i.text }}</div></div>
+      {% endfor %}
+      <a href="{{ url_for('analytics.insights') }}">All insights</a>
+    </div>
+    <div class="sp-card">
+      <h3 class="card-title">Dataset quality</h3>
+      {% if ctx.meta %}
+      <div class="quality-grid">
+        <div><div class="kpi-value">{{ '{:,}'.format(quality.records) }}</div><div class="muted small">Records imported</div></div>
+        <div><div class="kpi-value">{{ quality.duplicates }}</div><div class="muted small">Duplicates skipped</div></div>
+        <div><div class="kpi-value">{{ quality.missing }}</div><div class="muted small">Missing values</div></div>
+        <div><div class="kpi-value">{{ quality.invalid }}</div><div class="muted small">Invalid records</div></div>
+      </div>
+      <a href="{{ url_for('analytics.cleaning') }}">Review and clean data</a>
+      {% else %}<p class="muted mb-0">No datasets yet.</p>{% endif %}
+    </div>
+  </div>
+
+  <div class="sp-card mt-4">
+    <h3 class="card-title">{{ 'Top-performing posts' if ctx.top_posts and ctx.top_posts[0].interactions is not none else 'Recent posts' }}</h3>
+    {% if ctx.top_posts %}{{ posts_table(ctx.top_posts[:5], False) }}
+    {% else %}<p class="muted mb-0">No posts imported. Upload a posts file to see them here.</p>{% endif %}
+  </div>
+{% endif %}
+
+<div class="sp-card mt-4">
+  <div class="d-flex justify-content-between"><h3 class="card-title">Recent uploads</h3><a href="{{ url_for('uploads.history') }}">View all</a></div>
+  {% if recent %}
+    <div class="table-responsive"><table class="table sp-table">
+      <thead><tr><th>File</th><th>Status</th><th>Uploaded</th></tr></thead>
+      <tbody>{% for f in recent %}
+        <tr><td>{{ f.original_name }}</td><td><span class="badge-status st-{{ f.status }}">{{ f.status }}</span></td><td>{{ f.created_at.strftime('%d %b %Y %H:%M') }}</td></tr>
+      {% endfor %}</tbody></table></div>
+  {% else %}
+    <p class="muted mb-0">Nothing uploaded yet.</p>
+  {% endif %}
+</div>
+{% if has_data %}<script type="application/json" id="chart-data">{{ ctx.charts|tojson }}</script>{% endif %}
+{% endblock %}
+{% block scripts %}{{ chart_scripts() }}{% endblock %}

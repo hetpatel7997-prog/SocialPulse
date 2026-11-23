@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block page_title %}Profile{% endblock %}
+{% block content %}
+<div class="sp-card form-card">
+  <h3 class="card-title">Your details</h3>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="form-label">Username</label>
+    <input class="form-control sp-input" value="{{ current_user.username }}" disabled>
+    <label class="form-label mt-3">Email</label>
+    <input class="form-control sp-input" value="{{ current_user.email }}" disabled>
+    <label class="form-label mt-3" for="full_name">Full name</label>
+    <input class="form-control sp-input" id="full_name" name="full_name" maxlength="100" value="{{ current_user.full_name or '' }}">
+    <label class="form-label mt-3" for="instagram_handle">Instagram handle</label>
+    <input class="form-control sp-input" id="instagram_handle" name="instagram_handle" maxlength="60" value="{{ current_user.instagram_handle or '' }}" placeholder="yourhandle">
+    <button class="btn btn-sp mt-4" type="submit">Save profile</button>
+  </form>
+  <p class="muted small mt-4 mb-0">Member since {{ current_user.created_at.strftime('%d %B %Y') }}</p>
+</div>
+{% endblock %}

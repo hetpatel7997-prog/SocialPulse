@@ -1,0 +1,64 @@
+{% from "_macros.html" import chart, empty_state, no_data_cta, demo_banner %}
+{% set ep = 'analytics.' ~ kind %}
+{{ demo_banner(has_demo) }}
+{% if pv.reason and not pv.counts %}
+  {% call empty_state('bi-people', 'No ' ~ kind ~ ' data yet', pv.reason) %}{{ no_data_cta() }}{% endcall %}
+{% else %}
+  <div class="kpi-grid mb-4">
+    <div class="sp-card kpi"><div class="muted">Followers</div><div class="kpi-value">{{ '{:,}'.format(fstats.followers) if fstats.followers is not none else '–' }}</div></div>
+    <div class="sp-card kpi"><div class="muted">Following</div><div class="kpi-value">{{ '{:,}'.format(fstats.following) if fstats.following is not none else '–' }}</div></div>
+    <div class="sp-card kpi"><div class="muted">Mutual</div><div class="kpi-value">{{ fstats.mutual if fstats.mutual is not none else '–' }}</div></div>
+    <div class="sp-card kpi"><div class="muted">Not following back</div><div class="kpi-value">{{ fstats.not_following_back if fstats.not_following_back is not none else '–' }}</div></div>
+    <div class="sp-card kpi"><div class="muted">Follower / following ratio</div><div class="kpi-value">{{ fstats.ratio if fstats.ratio is not none else '–' }}</div></div>
+  </div>
+  <div class="grid-2 mb-4">
+    {{ chart('followers_vs_following', 'Followers vs following', 'bar', 240, 'Accounts') }}
+    {{ chart('follower_growth', 'Monthly follower growth', 'line', 240, 'Followers') }}
+  </div>
+
+  {% macro tab(v, label, ep, pv, view, q) %}
+    {% if v in pv.counts %}<a class="tab-pill {{ 'active' if view == v }}" href="{{ url_for(ep, view=v, q=q) }}">{{ label }} <span class="count">{{ '{:,}'.format(pv.counts[v]) }}</span></a>{% endif %}
+  {% endmacro %}
+  <div class="sp-card">
+    <div class="tabs-row">
+      {% if kind == 'followers' %}
+        {{ tab('all', 'All followers', ep, pv, view, q) }}{{ tab('mutual', 'Mutual', ep, pv, view, q) }}{{ tab('fans', 'You don\'t follow back', ep, pv, view, q) }}{{ tab('new', 'New since last snapshot', ep, pv, view, q) }}{{ tab('lost', 'No longer in list', ep, pv, view, q) }}
+      {% else %}
+        {{ tab('all', 'All following', ep, pv, view, q) }}{{ tab('mutual', 'Mutual', ep, pv, view, q) }}{{ tab('not_back', 'Not following you back', ep, pv, view, q) }}
+      {% endif %}
+    </div>
+    {% if kind == 'followers' and 'new' not in pv.counts %}
+      <div class="muted small mt-2">New and lost followers need follower exports from two or more different dates. A single export can't show who unfollowed you.</div>
+    {% endif %}
+    <form method="get" class="search-row mt-3">
+      <input type="hidden" name="view" value="{{ view }}">
+      <input class="form-control sp-input" name="q" value="{{ q }}" placeholder="Search username" aria-label="Search username">
+      <button class="btn btn-sp" type="submit"><i class="bi bi-search"></i> Search</button>
+      {% if q %}<a class="btn btn-ghost" href="{{ url_for(ep, view=view) }}">Clear</a>{% endif %}
+    </form>
+    {% if pv.reason %}<div class="note-box mt-3">{{ pv.reason }}</div>{% endif %}
+    {% if pv.rows %}
+    <div class="table-responsive mt-3"><table class="table sp-table align-middle">
+      <thead><tr>
+        {% for col, label in [('username', 'Username'), ('followed_at', 'Date')] %}
+          <th><a class="sort-link" href="{{ url_for(ep, view=view, q=q, sort=col, dir=('desc' if sort == col and dir == 'asc' else 'asc')) }}">{{ label }}
+            {% if sort == col %}<i class="bi bi-caret-{{ 'up' if dir == 'asc' else 'down' }}-fill"></i>{% endif %}</a></th>
+        {% endfor %}
+        <th>Profile</th></tr></thead>
+      <tbody>{% for r in pv.rows %}
+        <tr><td>@{{ r.username }}</td><td>{{ r.followed_at or '–' }}</td>
+          <td><a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">Open <i class="bi bi-box-arrow-up-right"></i></a></td></tr>
+      {% endfor %}</tbody></table></div>
+    <div class="pager">
+      <span class="muted small">{{ '{:,}'.format(pv.total) }} accounts · page {{ pv.page }} of {{ pv.pages }}</span>
+      <div>
+        {% if pv.page > 1 %}<a class="btn btn-ghost btn-sm" href="{{ url_for(ep, view=view, q=q, sort=sort, dir=dir, page=pv.page - 1) }}">Previous</a>{% endif %}
+        {% if pv.page < pv.pages %}<a class="btn btn-ghost btn-sm" href="{{ url_for(ep, view=view, q=q, sort=sort, dir=dir, page=pv.page + 1) }}">Next</a>{% endif %}
+      </div>
+    </div>
+    {% elif not pv.reason %}
+      <p class="muted mt-3 mb-0">No accounts match{{ ' "' ~ q ~ '"' if q }}.</p>
+    {% endif %}
+  </div>
+  <script type="application/json" id="chart-data">{{ charts|tojson }}</script>
+{% endif %}

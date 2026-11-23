@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import no_data_cta, demo_banner, chart_scripts %}
+{% block title %}Machine learning{% endblock %}
+{% block page_title %}Machine learning{% endblock %}
+{% block content %}
+{{ demo_banner(has_demo) }}
+<div class="note-box mb-4"><i class="bi bi-info-circle"></i> These models describe patterns in <strong>your past posts</strong>. They cannot predict Instagram's algorithm or your future follower count, and they stay switched off when there is too little data.</div>
+{% if not has_posts %}
+  <div class="sp-card empty-state"><i class="bi bi-cpu"></i><h3>Import posts to use this module</h3>{{ no_data_cta() }}</div>
+{% else %}
+{% macro unavailable(x) %}<div class="chart-empty"><i class="bi bi-slash-circle"></i><span>{{ x.reason }}</span></div>{% endmacro %}
+
+<div class="sp-card mb-4"><h3 class="card-title">1. Post performance groups (K-Means clustering)</h3>
+  {% if r.kmeans.available %}
+    <p class="muted">{{ r.kmeans.explanation }}</p>
+    <div class="grid-2 align-start">
+      <div class="chart-box" style="height:300px"><canvas id="kmeansChart"></canvas></div>
+      <div class="table-responsive"><table class="table sp-table">
+        <thead><tr><th>Group</th><th class="text-end">Posts</th>{% for f in r.kmeans.features %}<th class="text-end">Avg {{ f }}</th>{% endfor %}</tr></thead>
+        <tbody>{% for c in r.kmeans.clusters %}<tr><td>{{ c.name }}</td><td class="text-end">{{ c.size }} ({{ c.share }}%)</td>{% for f in r.kmeans.features %}<td class="text-end">{{ c.means[f] }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
+        <div class="muted small">Silhouette score: {{ r.kmeans.silhouette }} (1 = very distinct groups)</div></div>
+    </div>
+  {% else %}{{ unavailable(r.kmeans) }}{% endif %}
+</div>
+
+<div class="sp-card mb-4"><h3 class="card-title">2. Anomaly detection</h3>
+  {% if r.anomalies.available %}
+    <p class="muted">{{ r.anomalies.explanation }}</p>
+    {% if r.anomalies.rows %}
+    <div class="table-responsive"><table class="table sp-table"><thead><tr><th>Date</th><th>Caption</th><th class="text-end">Likes + comments</th><th>Result</th></tr></thead>
+      <tbody>{% for a in r.anomalies.rows %}<tr><td class="text-nowrap">{{ a.date }}</td><td>{{ a.caption }}</td><td class="text-end">{{ a.interactions }}</td><td>{{ a.direction }}</td></tr>{% endfor %}</tbody></table></div>
+    {% else %}<p class="mb-0">No posts stand out as unusual.</p>{% endif %}
+  {% else %}{{ unavailable(r.anomalies) }}{% endif %}
+</div>
+
+<div class="sp-card mb-4"><h3 class="card-title">3. Engagement and posting trends</h3>
+  {% if r.trends.available %}
+    <p class="muted">{{ r.trends.explanation }}</p>
+    <div class="grid-2">
+    {% for t in r.trends['items'] %}
+      <div><strong>{{ t.label }}</strong>: {{ t.direction }} ({{ '%+.1f'|format(t.change_pct) }}% per month, R² {{ t.r2 }})
+        <div class="chart-box mt-2" style="height:200px"><canvas id="trend{{ loop.index }}"></canvas></div></div>
+    {% endfor %}
+    </div>
+  {% else %}{{ unavailable(r.trends) }}{% endif %}
+</div>
+
+<div class="sp-card mb-4"><h3 class="card-title">4. Simple trend forecast</h3>
+  {% if r.forecast.available %}
+    <p class="muted">{{ r.forecast.explanation }}</p>
+    <div class="chart-box" style="height:260px"><canvas id="forecastChart"></canvas></div>
+  {% else %}{{ unavailable(r.forecast) }}{% endif %}
+</div>
+<script type="application/json" id="ml-data">{{ r|tojson }}</script>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+{% if has_posts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/ml.js') }}"></script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,82 @@
+{% macro kpi_grid(kpis) %}
+<div class="kpi-grid">
+  {% for k in kpis %}
+  <div class="sp-card kpi">
+    <div class="muted">{{ k.label }}</div>
+    {% if k.value is none %}
+      <div class="kpi-value kpi-na" title="{{ k.note }}">&ndash;</div>
+      <div class="muted small">{{ k.note }}</div>
+    {% else %}
+      <div class="kpi-value">{{ k.value }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro chart(name, title, type, height=280, y_label='', x_label='', toggle=False) %}
+<div class="sp-card chart-card" data-chart="{{ name }}" data-type="{{ type }}" data-ylabel="{{ y_label }}" data-xlabel="{{ x_label }}">
+  <div class="d-flex justify-content-between align-items-start gap-2">
+    <h3 class="card-title">{{ title }}</h3>
+    {% if toggle %}
+    <div class="btn-group btn-group-sm chart-toggle" role="group" aria-label="Time grouping">
+      <button type="button" class="btn btn-ghost active" data-mode="monthly">Monthly</button>
+      <button type="button" class="btn btn-ghost" data-mode="daily">Daily</button>
+    </div>
+    {% endif %}
+  </div>
+  <div class="chart-box" style="height: {{ height }}px">
+    <div class="chart-loading"><div class="spinner-border spinner-border-sm" role="status"></div> Loading chart</div>
+    <canvas></canvas>
+  </div>
+  <div class="chart-empty d-none"><i class="bi bi-bar-chart-line"></i><span></span></div>
+  <div class="chart-note muted small mt-2"></div>
+</div>
+{% endmacro %}
+
+{% macro empty_state(icon, title, text) %}
+<div class="sp-card empty-state">
+  <i class="bi {{ icon }}"></i>
+  <h3>{{ title }}</h3>
+  <p class="muted">{{ text }}</p>
+  {{ caller() if caller }}
+</div>
+{% endmacro %}
+
+{% macro demo_form() %}
+<form method="post" action="{{ url_for('uploads.load_demo') }}" class="d-inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="btn btn-ghost" type="submit"><i class="bi bi-play-circle"></i> Load demo data</button>
+</form>
+{% endmacro %}
+
+{% macro no_data_cta() %}
+<a class="btn btn-sp" href="{{ url_for('uploads.upload_page') }}"><i class="bi bi-cloud-arrow-up"></i> Upload data</a>
+{{ demo_form() }}
+{% endmacro %}
+
+{% macro demo_banner(has_demo) %}
+{% if has_demo %}
+<div class="demo-banner"><i class="bi bi-info-circle"></i> <strong>Demo mode:</strong> this account contains sample data, not a real Instagram account.
+  Remove it any time from <a href="{{ url_for('uploads.history') }}">Import history</a>.</div>
+{% endif %}
+{% endmacro %}
+
+{% macro posts_table(rows, show_vs=True) %}
+<div class="table-responsive"><table class="table sp-table align-middle">
+  <thead><tr><th>Date</th><th>Type</th><th>Caption</th><th class="text-end">Likes</th><th class="text-end">Comments</th><th class="text-end">Total</th>{% if show_vs %}<th class="text-end">vs average</th>{% endif %}</tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr><td class="text-nowrap">{{ r.date }}</td><td>{{ r.type }}</td><td>{{ r.caption }}</td>
+      <td class="text-end">{{ r.likes if r.likes is not none else '–' }}</td>
+      <td class="text-end">{{ r.comments if r.comments is not none else '–' }}</td>
+      <td class="text-end fw-bold">{{ r.interactions if r.interactions is not none else '–' }}</td>
+      {% if show_vs %}<td class="text-end">{{ (r.vs_avg|string + '×') if r.vs_avg is not none else '–' }}</td>{% endif %}</tr>
+  {% endfor %}
+  </tbody></table></div>
+{% endmacro %}
+
+{% macro chart_scripts() %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endmacro %}

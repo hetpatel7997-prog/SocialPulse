@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+{% block title %}Import history{% endblock %}
+{% block page_title %}Import history{% endblock %}
+{% block content %}
+{% if not rows %}
+  {% call empty_state('bi-clock-history', 'No imports yet', 'Files you upload will be listed here with their processing results.') %}
+    <a class="btn btn-sp" href="{{ url_for('uploads.upload_page') }}">Upload data</a>
+  {% endcall %}
+{% else %}
+<div class="sp-card">
+  <div class="table-responsive"><table class="table sp-table align-middle">
+    <thead><tr><th>File</th><th>Size</th><th>Status</th><th>Datasets found</th><th>Uploaded</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}{% set f = r.file %}
+      <tr>
+        <td>{{ f.original_name }}{% if f.is_demo %} <span class="badge-status st-demo">DEMO</span>{% endif %}</td>
+        <td class="text-nowrap">{{ '%.1f'|format(f.size_bytes / 1024) }} KB</td>
+        <td><span class="badge-status st-{{ f.status }}">{{ f.status }}</span>
+          {% if f.error_message %}<div class="small text-danger mt-1">{{ f.error_message }}</div>{% endif %}</td>
+        <td>
+          {% for x in r.datasets %}
+            <div class="small">{{ x.d.kind|title }}: {{ '{:,}'.format(x.d.record_count) }} records
+              <span class="muted">({{ x.d.duplicate_count }} duplicates, {{ x.d.invalid_count }} invalid, {{ x.d.missing_count }} missing)</span>
+              {% if x.cleaned %}<span class="badge-status st-processed">cleaned</span>{% endif %}</div>
+          {% else %}<span class="muted small">None</span>{% endfor %}
+        </td>
+        <td class="text-nowrap">{{ f.created_at.strftime('%d %b %Y %H:%M') }}</td>
+        <td class="text-end">
+          <form method="post" action="{{ url_for('uploads.delete_upload', file_id=f.id) }}" onsubmit="return confirm('Delete this file and every record created from it? This cannot be undone.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-danger-soft" type="submit"><i class="bi bi-trash"></i> Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody></table></div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block public_content %}
+<div class="auth-card sp-card">
+  <a class="brand mb-4" href="{{ url_for('dashboard.landing') }}"><span class="brand-mark"><i class="bi bi-activity"></i></span> SocialPulse</a>
+  <h2>Sign in</h2>
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="form-label" for="identity">Username or email</label>
+    <input class="form-control sp-input" id="identity" name="identity" value="{{ identity or '' }}" required autofocus>
+    <label class="form-label mt-3" for="password">Password</label>
+    <input class="form-control sp-input" id="password" name="password" type="password" required>
+    <div class="form-check mt-3">
+      <input class="form-check-input" type="checkbox" id="remember" name="remember">
+      <label class="form-check-label muted" for="remember">Keep me signed in</label>
+    </div>
+    <button class="btn btn-sp w-100 mt-4" type="submit">Sign in</button>
+  </form>
+  <p class="muted mt-4 mb-0">New here? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
+</div>
+{% endblock %}

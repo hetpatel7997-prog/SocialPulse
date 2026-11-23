@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kpi_grid, chart, empty_state, no_data_cta, demo_banner, posts_table, chart_scripts %}
+{% block title %}Content analytics{% endblock %}
+{% block page_title %}Content analytics{% endblock %}
+{% block content %}
+{{ demo_banner(has_demo) }}
+{% if ctx.all_posts is none %}
+  {% call empty_state('bi-images', 'No posts imported yet', 'Upload a posts file (for example posts_1.json, or a CSV/Excel sheet with date, caption, likes and comments).') %}{{ no_data_cta() }}{% endcall %}
+{% else %}
+<form method="get" class="sp-card filter-row mb-4">
+  <div><label class="form-label" for="date_from">From</label><input class="form-control sp-input" type="date" id="date_from" name="date_from" value="{{ filters.date_from or '' }}"></div>
+  <div><label class="form-label" for="date_to">To</label><input class="form-control sp-input" type="date" id="date_to" name="date_to" value="{{ filters.date_to or '' }}"></div>
+  <div><label class="form-label" for="ctype">Content type</label>
+    <select class="form-select sp-input" id="ctype" name="ctype" {{ 'disabled' if not ctx.caps.types }}>
+      <option value="">All types</option>
+      {% for t in ctx.types_available %}<option value="{{ t }}" {{ 'selected' if filters.ctype == t }}>{{ t|title }}</option>{% endfor %}
+    </select></div>
+  <div><label class="form-label" for="tier">Performance</label>
+    <select class="form-select sp-input" id="tier" name="tier" {{ 'disabled' if not ctx.tiers }}>
+      <option value="">All posts</option>
+      {% for t, l in [('high', 'Top 25%'), ('average', 'Middle 50%'), ('low', 'Bottom 25%')] %}<option value="{{ t }}" {{ 'selected' if filters.tier == t }}>{{ l }}</option>{% endfor %}
+    </select></div>
+  <div class="filter-actions"><button class="btn btn-sp" type="submit">Apply filters</button><a class="btn btn-ghost" href="{{ url_for('analytics.content') }}">Reset</a></div>
+</form>
+{% if not ctx.caps.types %}<div class="muted small mb-3">Content type filtering is unavailable: the export doesn't identify content types reliably.</div>{% endif %}
+
+{% if ctx.posts is none or ctx.posts|length == 0 %}
+  {% call empty_state('bi-funnel', 'No posts match these filters', 'Widen the date range or reset the filters.') %}{% endcall %}
+{% else %}
+<div class="kpi-grid">
+  <div class="sp-card kpi"><div class="muted">Posts</div><div class="kpi-value">{{ ctx.kpis[2].value }}</div></div>
+  <div class="sp-card kpi"><div class="muted">Likes per post</div><div class="kpi-value {{ 'kpi-na' if ctx.avg_likes is none }}">{{ ctx.avg_likes if ctx.avg_likes is not none else '–' }}</div>{% if ctx.avg_likes is none %}<div class="muted small">Not in your export</div>{% endif %}</div>
+  <div class="sp-card kpi"><div class="muted">Comments per post</div><div class="kpi-value {{ 'kpi-na' if ctx.avg_comments is none }}">{{ ctx.avg_comments if ctx.avg_comments is not none else '–' }}</div>{% if ctx.avg_comments is none %}<div class="muted small">Not in your export</div>{% endif %}</div>
+  <div class="sp-card kpi"><div class="muted">Posts per month</div><div class="kpi-value {{ 'kpi-na' if ctx.posts_per_month is none }}">{{ ctx.posts_per_month if ctx.posts_per_month is not none else '–' }}</div></div>
+  <div class="sp-card kpi"><div class="muted">Engagement rate</div><div class="kpi-value {{ 'kpi-na' if ctx.engagement_rate is none }}">{{ (ctx.engagement_rate ~ '%') if ctx.engagement_rate is not none else '–' }}</div>{% if ctx.engagement_rate is none %}<div class="muted small">Needs followers + likes/comments</div>{% endif %}</div>
+</div>
+
+<div class="grid-2 mt-4">
+  {{ chart('post_engagement', 'Post engagement (top 15 posts)', 'bar', 280, 'Likes + comments') }}
+  {{ chart('content_performance', 'Content performance', 'pie', 280) }}
+</div>
+<div class="mt-4">{{ chart('posting_frequency', 'Posting frequency', 'line', 260, 'Posts', '', True) }}</div>
+<div class="grid-2 mt-4">
+  {{ chart('likes_comments', 'Likes and comments by month', 'bar', 280, 'Count') }}
+  {{ chart('distribution', 'Engagement distribution', 'bar', 280, 'Number of posts', 'Likes + comments per post') }}
+</div>
+<div class="grid-2 mt-4">
+  {{ chart('heatmap', 'Monthly activity heatmap (posts by weekday)', 'heatmap', 300) }}
+  {{ chart('weekday', 'Posts by day of week', 'bar', 300, 'Posts') }}
+</div>
+
+<div class="sp-card mt-4"><h3 class="card-title">{{ 'Top 10 posts' if ctx.top_posts and ctx.top_posts[0].interactions is not none else 'Most recent posts (no like/comment counts in export)' }}</h3>{{ posts_table(ctx.top_posts) }}</div>
+{% if ctx.bottom_posts %}<div class="sp-card mt-4"><h3 class="card-title">Lowest-performing posts</h3>{{ posts_table(ctx.bottom_posts) }}</div>{% endif %}
+{% if ctx.type_table %}
+<div class="sp-card mt-4"><h3 class="card-title">Content type comparison</h3>
+  <div class="table-responsive"><table class="table sp-table">
+    <thead><tr><th>Type</th><th class="text-end">Posts</th><th class="text-end">Avg likes</th><th class="text-end">Avg comments</th><th class="text-end">Avg likes + comments</th></tr></thead>
+    <tbody>{% for t in ctx.type_table %}<tr><td>{{ t.content_type|title }}</td><td class="text-end">{{ t.posts }}</td><td class="text-end">{{ t.avg_likes if t.avg_likes is not none else '–' }}</td><td class="text-end">{{ t.avg_comments if t.avg_comments is not none else '–' }}</td><td class="text-end fw-bold">{{ t.avg_interactions if t.avg_interactions is not none else '–' }}</td></tr>{% endfor %}</tbody>
+  </table></div></div>
+{% endif %}
+<script type="application/json" id="chart-data">{{ ctx.charts|tojson }}</script>
+{% endif %}
+{% endif %}
+{% endblock %}
+{% block scripts %}{{ chart_scripts() }}{% endblock %}

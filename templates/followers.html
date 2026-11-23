@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chart_scripts %}
+{% block title %}Followers{% endblock %}
+{% block page_title %}Followers{% endblock %}
+{% block content %}{% include "_people.html" %}{% endblock %}
+{% block scripts %}{{ chart_scripts() }}{% endblock %}

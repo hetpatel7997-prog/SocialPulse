@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Create account{% endblock %}
+{% block public_content %}
+<div class="auth-card sp-card">
+  <a class="brand mb-4" href="{{ url_for('dashboard.landing') }}"><span class="brand-mark"><i class="bi bi-activity"></i></span> SocialPulse</a>
+  <h2>Create your account</h2>
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="form-label" for="username">Username</label>
+    <input class="form-control sp-input" id="username" name="username" value="{{ username or '' }}" required autofocus>
+    <label class="form-label mt-3" for="email">Email</label>
+    <input class="form-control sp-input" id="email" name="email" type="email" value="{{ email or '' }}" required>
+    <label class="form-label mt-3" for="password">Password</label>
+    <input class="form-control sp-input" id="password" name="password" type="password" required aria-describedby="pwHelp">
+    <div id="pwHelp" class="muted small mt-1">At least 8 characters, with a letter and a number.</div>
+    <label class="form-label mt-3" for="confirm_password">Confirm password</label>
+    <input class="form-control sp-input" id="confirm_password" name="confirm_password" type="password" required>
+    <button class="btn btn-sp w-100 mt-4" type="submit">Create account</button>
+  </form>
+  <p class="muted mt-4 mb-0">Already registered? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+</div>
+{% endblock %}

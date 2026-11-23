@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="sp-card">
+    <h3 class="card-title">PDF report</h3>
+    <p class="muted">KPIs, followers and following, content performance, data quality and insights in one document.</p>
+    <form method="post" action="{{ url_for('reports.generate') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="type" value="pdf"><button class="btn btn-sp" type="submit"><i class="bi bi-file-earmark-pdf"></i> Generate PDF</button></form>
+  </div>
+  <div class="sp-card">
+    <h3 class="card-title">Excel report</h3>
+    <p class="muted">Separate worksheets for overview, followers, following, connections, posts, engagement, data quality and insights. Only sheets your data supports are included.</p>
+    <form method="post" action="{{ url_for('reports.generate') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="type" value="xlsx"><button class="btn btn-sp" type="submit"><i class="bi bi-file-earmark-excel"></i> Generate Excel</button></form>
+  </div>
+</div>
+<div class="sp-card mt-4">
+  <h3 class="card-title">Your reports</h3>
+  {% if reports %}
+  <div class="table-responsive"><table class="table sp-table align-middle">
+    <thead><tr><th>Type</th><th>Created</th><th>Size</th><th></th></tr></thead>
+    <tbody>{% for r in reports %}
+      <tr><td>{{ 'PDF' if r.report_type == 'pdf' else 'Excel' }}</td><td>{{ r.created_at.strftime('%d %b %Y %H:%M') }}</td><td>{{ '%.0f'|format((r.size_bytes or 0) / 1024) }} KB</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-sp" href="{{ url_for('reports.download', report_id=r.id) }}"><i class="bi bi-download"></i> Download</a>
+          <form class="d-inline" method="post" action="{{ url_for('reports.delete', report_id=r.id) }}" onsubmit="return confirm('Delete this report?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-danger-soft" type="submit"><i class="bi bi-trash"></i></button></form></td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<p class="muted mb-0">No reports yet. Generate one above.</p>{% endif %}
+</div>
+{% endblock %}

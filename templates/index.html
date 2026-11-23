@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Instagram analytics from your own data{% endblock %}
+{% block public %}
+<div class="landing">
+  <nav class="landing-nav">
+    <a class="brand" href="{{ url_for('dashboard.landing') }}"><span class="brand-mark"><i class="bi bi-activity"></i></span> SocialPulse</a>
+    <div>
+      {% if current_user.is_authenticated %}
+        <a class="btn btn-sp" href="{{ url_for('dashboard.index') }}">Open dashboard</a>
+      {% else %}
+        <a class="btn btn-ghost me-2" href="{{ url_for('auth.login') }}">Sign in</a>
+        <a class="btn btn-sp" href="{{ url_for('auth.register') }}">Create account</a>
+      {% endif %}
+    </div>
+  </nav>
+  {% include "_flash.html" %}
+  <section class="hero">
+    <h1>Your Instagram export, turned into answers.</h1>
+    <p class="lead">Upload the data Instagram already lets you download. SocialPulse cleans it, finds what it contains, and shows what your followers, posts and engagement are really doing. Nothing is estimated for data your export doesn't include.</p>
+    <a class="btn btn-sp btn-lg" href="{{ url_for('auth.register') }}">Start with your export</a>
+  </section>
+  <section class="feature-grid">
+    <div class="sp-card"><h3>Reads what's there</h3><p>JSON, CSV, Excel and HTML exports are detected automatically. Metrics your export lacks are labelled as unavailable.</p></div>
+    <div class="sp-card"><h3>Followers, honestly</h3><p>See mutual connections and accounts that don't follow back. Unfollows are only reported when you upload more than one snapshot.</p></div>
+    <div class="sp-card"><h3>Private by design</h3><p>Every dataset belongs to your account only, and you can delete it and everything derived from it at any time.</p></div>
+  </section>
+</div>
+{% endblock %}

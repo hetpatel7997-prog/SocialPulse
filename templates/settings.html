@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block content %}
+<div class="sp-card form-card">
+  <h3 class="card-title">Change password</h3>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="form-label" for="current_password">Current password</label>
+    <input class="form-control sp-input" id="current_password" name="current_password" type="password" required>
+    <label class="form-label mt-3" for="new_password">New password</label>
+    <input class="form-control sp-input" id="new_password" name="new_password" type="password" required>
+    <label class="form-label mt-3" for="confirm_password">Confirm new password</label>
+    <input class="form-control sp-input" id="confirm_password" name="confirm_password" type="password" required>
+    <button class="btn btn-sp mt-4" type="submit">Update password</button>
+  </form>
+</div>
+<div class="sp-card form-card mt-4">
+  <h3 class="card-title">Delete my data</h3>
+  <p class="muted">Permanently removes every uploaded file, imported record, analysis and report. Your account stays.</p>
+  <form method="post" action="{{ url_for('dashboard.delete_data') }}" onsubmit="return confirm('Delete ALL your uploaded data? This cannot be undone.');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="form-label" for="del_pw">Confirm with your password</label>
+    <input class="form-control sp-input" id="del_pw" name="password" type="password" required>
+    <button class="btn btn-danger-soft mt-3" type="submit"><i class="bi bi-trash"></i> Delete all my data</button>
+  </form>
+</div>
+{% endblock %}
